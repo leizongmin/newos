@@ -1,10 +1,13 @@
+#? docker image name and tag
 DOCKER_IMAGE_NAME ?= newos
 DOCKER_IMAGE_TAG ?= latest
 
+#? target directory
 TARGET_DIR ?= $(CURDIR)/target
 TARGET_ROOTFS_DIR ?= $(TARGET_DIR)/rootfs
 TARGET_ROOTFS_BIN_DIR ?= $(TARGET_DIR)/rootfs/bin
 
+#? cargo target
 CARGO_TARGET ?= x86_64-unknown-linux-musl
 CARGO_BUILD_CMD ?= cargo build --target=$(CARGO_TARGET) --release
 RUST_MUSL_CROSS_IMAGE_NAME ?= messense/rust-musl-cross:x86_64-musl
@@ -36,6 +39,7 @@ docker-image: Dockerfile
 docker-run:
 	@docker run -it --rm $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
 
+#? save the docker image to a tarball
 .PHONY: docker-save
 docker-save:
 	@docker save $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) > $(TARGET_DIR)/$(DOCKER_IMAGE_NAME).tar

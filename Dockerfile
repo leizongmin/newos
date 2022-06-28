@@ -1,5 +1,5 @@
 FROM scratch
 
-ADD target/rootfs/* /
+ADD target/rootfs /
 
-ENTRYPOINT [ "/init" ]
+CMD [ "/bin/init" ]

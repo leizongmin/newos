@@ -76,7 +76,7 @@ $(TARGET_ROOTFS_BIN_DIR)/init: $(TARGET_ROOTFS_BIN_DIR) $(CURDIR)/init
 
 #? the /bin/coreutils binary
 $(TARGET_ROOTFS_BIN_DIR)/coreutils: $(TARGET_ROOTFS_BIN_DIR)
-	docker run -it --rm -v $(CURDIR):$(CURDIR) -w $(CURDIR) \
+	docker run --rm -v $(CURDIR):$(CURDIR) -w $(CURDIR) \
 		-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
 		$(RUST_MUSL_CROSS_IMAGE_NAME) \
 		cargo install coreutils --target $(CARGO_TARGET) --root $(TARGET_ROOTFS_DIR)

@@ -8,12 +8,14 @@ A Linux kernel based operating system.
 
 ## Why this project
 
-This is my testing ground for learning the operating system, and I want to implement it in a different way from the traditional. I want this new OS to keep the following features:
+This is my testing ground for learning the operating system, and I want to implement it in a different way from the traditional.
 
--   As far as I know, Rust will be merged into the Linux kernel. In this operating system, it uses Rust as much as possible to develop core software.
--   All software will be statically compiled as much as possible to ensure that you can use the latest or very old version, no matter what the libc version is.
--   Use modern alternatives to essential command line tools as much as possible.
--   Use the latest software version whenever possible.
+I want this new OS to keep the following features:
+
+-   As far as I know, Rust will be merged into the Linux kernel. In this operating system, it uses **Rust** as much as possible to develop core software.
+-   All software will be **statically compiled** as much as possible to ensure that you can use the latest or very old version, no matter what the libc version is.
+-   Use **modern alternatives** to essential command line tools as much as possible.
+-   Use the **latest software version** whenever possible.
 
 ## Development
 

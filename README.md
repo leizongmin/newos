@@ -23,13 +23,13 @@ Requirements:
 
 -   Newer macOS or Linux operating system.
 -   Newer [Docker](https://www.docker.com/) installed.
--   Newer [Rust](https://www.rust-lang.org/) installed _(will be installed automatically via the `make init` command)_.
+-   Newer [Rust](https://www.rust-lang.org/) installed _(will be installed automatically via the `make setup` command)_.
 
 Run below commands:
 
 ```bash
-# initialize the development environment
-make init
+# setup the development environment
+make setup
 # make all targets
 make all
 ```

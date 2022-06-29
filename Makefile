@@ -38,9 +38,9 @@ endif
 help:
 	@printf "Usage: make [target]\n"
 
-#? initialize the development environment
-.PHONY: init
-init:
+#? setup the development environment
+.PHONY: setup
+setup:
 	@curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 	@rustup target add x86_64-unknown-linux-musl
 
@@ -79,11 +79,11 @@ rootfs: bin libc
 
 #? all binarys
 .PHONY: bin
-bin: 	$(TARGET_ROOTFS_DIR)/bin/init \
+bin: 	init \
 		coreutils \
 		nushell \
 		git \
-		$(TARGET_ROOTFS_BIN_DIR)/ldd \
+		ldd \
 
 ################################################################################
 #? target directory
@@ -113,6 +113,9 @@ $(TARGET_ROOTFS_BIN_DIR)/init: $(TARGET_ROOTFS_BIN_DIR) $(CURDIR)/init
 		$(CARGO_BUILD_CMD) && \
 		cp target/$(CARGO_TARGET)/release/init $(TARGET_ROOTFS_BIN_DIR)"
 	@ls -ahl $@ && file $@
+
+.PHONY: init
+init: $(TARGET_ROOTFS_BIN_DIR)/init
 
 ################################################################################
 #? the /bin/coreutils binary
@@ -174,5 +177,8 @@ libc: $(TARGET_ROOTFS_LIB_DIR) $(TARGET_ROOTFS_LIB64_DIR)
 $(TARGET_ROOTFS_BIN_DIR)/ldd: $(TARGET_ROOTFS_BIN_DIR)
 	$(GCC_DOCKER_CMD) bash -c "cp -Rf /usr/bin/ldd $@"
 	@ls -ahl $@ && file $@
+
+.PHONY: ldd
+ldd: $(TARGET_ROOTFS_BIN_DIR)/ldd
 
 ################################################################################

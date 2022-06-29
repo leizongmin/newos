@@ -11,6 +11,11 @@ TARGET_ROOTFS_BIN_DIR ?= $(TARGET_DIR)/rootfs/bin
 CARGO_TARGET ?= x86_64-unknown-linux-musl
 CARGO_BUILD_CMD ?= cargo build --target=$(CARGO_TARGET) --release
 RUST_MUSL_CROSS_IMAGE_NAME ?= messense/rust-musl-cross:x86_64-musl
+RUST_MUSL_CROSS_DOCKER_CMD ?= @docker run --rm \
+								-v $(CURDIR):$(CURDIR) \
+								-w $(CURDIR) \
+								-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
+								$(RUST_MUSL_CROSS_IMAGE_NAME)
 
 #? get help information
 .PHONY: help
@@ -37,7 +42,7 @@ docker-image: Dockerfile
 #? use docker to run the image, must make sure the image is built first
 .PHONY: docker-run
 docker-run:
-	@docker run -it --rm $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+	@docker run -it --rm -e RUST_BACKTRACE=full $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
 
 #? save the docker image to a tarball
 .PHONY: docker-save
@@ -70,23 +75,21 @@ $(TARGET_ROOTFS_BIN_DIR): $(TARGET_ROOTFS_DIR)
 
 #? the /bin/init binary
 $(TARGET_ROOTFS_BIN_DIR)/init: $(TARGET_ROOTFS_BIN_DIR) $(CURDIR)/init
-	@cd init && \
+	@$(RUST_MUSL_CROSS_DOCKER_CMD) bash -c "cd init && \
 		$(CARGO_BUILD_CMD) && \
-		cp target/$(CARGO_TARGET)/release/init $(TARGET_ROOTFS_BIN_DIR)
-	@ls -ahl $@ && ldd $@
+		cp target/$(CARGO_TARGET)/release/init $(TARGET_ROOTFS_BIN_DIR)"
+	@ls -ahl $@ && file $@
 
 #? the /bin/coreutils binary
 $(TARGET_ROOTFS_BIN_DIR)/coreutils: $(TARGET_ROOTFS_BIN_DIR)
-	@docker run --rm -v $(CURDIR):$(CURDIR) -w $(CURDIR) \
-		-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
-		$(RUST_MUSL_CROSS_IMAGE_NAME) \
+	@$(RUST_MUSL_CROSS_DOCKER_CMD) \
 		cargo install coreutils --target $(CARGO_TARGET) --root $(TARGET_ROOTFS_DIR)
-	@ls -ahl $@ && ldd $@
+	@ls -ahl $@ && file $@
 
 #? the coreutils (cat, cp, cut, pwd, ...) binary
 .PHONY: coreutils
 coreutils: $(TARGET_ROOTFS_BIN_DIR)/coreutils
-	@cp -rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)
+	@cp -Rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)
 
 #? the nushell release tar file
 $(TARGET_DIR)/nu.tar.gz:
@@ -97,4 +100,4 @@ $(TARGET_ROOTFS_BIN_DIR)/nu: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/nu.tar.gz
 	@cd $(TARGET_ROOTFS_BIN_DIR) && \
 		tar -xvf $(TARGET_DIR)/nu.tar.gz && \
 		rm -rf README.* LICENSE nu_plugin_example
-	@ls -ahl $@ && ldd $@
+	@ls -ahl $@ && file $@

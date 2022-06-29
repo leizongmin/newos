@@ -22,9 +22,15 @@ make docker-image && make docker-run
 
 ## TODO
 
-- [x] Use [uutils/coreutils](https://github.com/uutils/coreutils) as an alternative to GNU coreutils.
-- [x] Use [Nushell](https://www.nushell.sh/) as the default shell.
-- [ ] Use [Homebrew](https://brew.sh/) as the default package manager.
+- [ ] Softwares:
+    - [x] Use [uutils/coreutils](https://github.com/uutils/coreutils) as an alternative to GNU coreutils.
+    - [x] Use [Nushell](https://www.nushell.sh/) as the default shell.
+    - [ ] Use [Homebrew](https://brew.sh/) as the default package manager.
+- [ ] Boot:
+    - [ ] Build the [Linux Kernel](https://github.com/torvalds/linux) from source.
+    - [ ] Use [GRUB](https://www.gnu.org/software/grub/) as the boot loader.
+    - [ ] Start and develop with [QEMU](https://www.qemu.org/).
+    - [ ] Installer.
 
 ## License
 

@@ -53,7 +53,7 @@ all: bin
 #? all binarys
 .PHONY: bin
 bin: 	$(TARGET_ROOTFS_DIR)/bin/init \
-		$(TARGET_ROOTFS_DIR)/bin/coreutils \
+		coreutils \
 
 #? target directory
 $(TARGET_DIR):
@@ -79,5 +79,10 @@ $(TARGET_ROOTFS_BIN_DIR)/coreutils: $(TARGET_ROOTFS_BIN_DIR)
 	docker run --rm -v $(CURDIR):$(CURDIR) -w $(CURDIR) \
 		-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
 		$(RUST_MUSL_CROSS_IMAGE_NAME) \
-		bash -c "cargo install coreutils --target $(CARGO_TARGET) --root $(TARGET_ROOTFS_DIR) && chmod -R 0777 $(TARGET_ROOTFS_DIR)"
+		cargo install coreutils --target $(CARGO_TARGET) --root $(TARGET_ROOTFS_DIR)
 	ls -ahl $@ && ldd $@
+
+#? the coreutils (cat, cp, cut, pwd, ...) binary
+.PHONY: coreutils
+coreutils: $(TARGET_ROOTFS_BIN_DIR)/coreutils
+	cp -rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)

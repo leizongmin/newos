@@ -54,35 +54,47 @@ all: bin
 .PHONY: bin
 bin: 	$(TARGET_ROOTFS_DIR)/bin/init \
 		coreutils \
+		$(TARGET_ROOTFS_BIN_DIR)/nu \
 
 #? target directory
 $(TARGET_DIR):
-	@mkdir -p $@
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
 
 #? target rootfs directory
 $(TARGET_ROOTFS_DIR): $(TARGET_DIR)
-	@mkdir -p $@
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
 
 #? target rootfs/bin directory
 $(TARGET_ROOTFS_BIN_DIR): $(TARGET_ROOTFS_DIR)
-	@mkdir -p $@
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
 
 #? the /bin/init binary
 $(TARGET_ROOTFS_BIN_DIR)/init: $(TARGET_ROOTFS_BIN_DIR) $(CURDIR)/init
 	@cd init && \
 		$(CARGO_BUILD_CMD) && \
 		cp target/$(CARGO_TARGET)/release/init $(TARGET_ROOTFS_BIN_DIR)
-	ls -ahl $@ && ldd $@
+	@ls -ahl $@ && ldd $@
 
 #? the /bin/coreutils binary
 $(TARGET_ROOTFS_BIN_DIR)/coreutils: $(TARGET_ROOTFS_BIN_DIR)
-	docker run --rm -v $(CURDIR):$(CURDIR) -w $(CURDIR) \
+	@docker run --rm -v $(CURDIR):$(CURDIR) -w $(CURDIR) \
 		-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
 		$(RUST_MUSL_CROSS_IMAGE_NAME) \
 		cargo install coreutils --target $(CARGO_TARGET) --root $(TARGET_ROOTFS_DIR)
-	ls -ahl $@ && ldd $@
+	@ls -ahl $@ && ldd $@
 
 #? the coreutils (cat, cp, cut, pwd, ...) binary
 .PHONY: coreutils
 coreutils: $(TARGET_ROOTFS_BIN_DIR)/coreutils
-	cp -rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)
+	@cp -rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)
+
+#? the nushell release tar file
+$(TARGET_DIR)/nu.tar.gz:
+	curl -L -o $(TARGET_DIR)/nu.tar.gz https://github.com/nushell/nushell/releases/download/0.64.0/nu-0.64.0-x86_64-unknown-linux-musl.tar.gz
+
+#? the /bin/nu binary
+$(TARGET_ROOTFS_BIN_DIR)/nu: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/nu.tar.gz
+	@cd $(TARGET_ROOTFS_BIN_DIR) && \
+		tar -xvf $(TARGET_DIR)/nu.tar.gz && \
+		rm -rf README.* LICENSE nu_plugin_example
+	@ls -ahl $@ && ldd $@

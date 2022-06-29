@@ -23,7 +23,7 @@ make docker-image && make docker-run
 ## TODO
 
 - [x] Use [uutils/coreutils](https://github.com/uutils/coreutils) as an alternative to GNU coreutils.
-- [ ] Use [Nushell](https://www.nushell.sh/) as the default shell.
+- [x] Use [Nushell](https://www.nushell.sh/) as the default shell.
 - [ ] Use [Homebrew](https://brew.sh/) as the default package manager.
 
 ## License

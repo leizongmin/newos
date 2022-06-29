@@ -6,6 +6,8 @@ DOCKER_IMAGE_TAG ?= latest
 TARGET_DIR ?= $(CURDIR)/target
 TARGET_ROOTFS_DIR ?= $(TARGET_DIR)/rootfs
 TARGET_ROOTFS_BIN_DIR ?= $(TARGET_DIR)/rootfs/bin
+TARGET_ROOTFS_LIB_DIR ?= $(TARGET_DIR)/rootfs/lib
+TARGET_ROOTFS_LIB64_DIR ?= $(TARGET_DIR)/rootfs/lib64
 
 #? cargo target
 CARGO_TARGET ?= x86_64-unknown-linux-musl
@@ -16,6 +18,19 @@ RUST_MUSL_CROSS_DOCKER_CMD ?= @docker run --rm \
 								-w $(CURDIR) \
 								-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
 								$(RUST_MUSL_CROSS_IMAGE_NAME)
+
+#? docker gcc
+GCC_IMAGE_NAME ?= gcc:12
+GCC_DOCKER_CMD ?= @docker run --rm \
+					-v $(CURDIR):$(CURDIR) \
+					-w $(CURDIR) \
+					$(GCC_IMAGE_NAME)
+
+ifeq ($(shell uname -s),Linux)
+	CPU_NUMBER ?= $(shell nproc)
+else
+	CPU_NUMBER ?= 1
+endif
 
 #? get help information
 .PHONY: help
@@ -31,7 +46,7 @@ init:
 #? clean target
 .PHONY: clean
 clean:
-	@rm -rf ${TARGET_ROOTFS_DIR}
+	@$(GCC_DOCKER_CMD) bash -c "rm -rf ${TARGET_ROOTFS_DIR}"
 
 #? make the docker image
 .PHONY: docker-image
@@ -57,13 +72,15 @@ all: rootfs
 
 #? make the rootfs
 .PHONY: rootfs
-rootfs: bin
+rootfs: bin libc
 
 #? all binarys
 .PHONY: bin
 bin: 	$(TARGET_ROOTFS_DIR)/bin/init \
 		coreutils \
 		$(TARGET_ROOTFS_BIN_DIR)/nu \
+		git \
+		$(TARGET_ROOTFS_BIN_DIR)/ldd \
 
 #? target directory
 $(TARGET_DIR):
@@ -75,6 +92,14 @@ $(TARGET_ROOTFS_DIR): $(TARGET_DIR)
 
 #? target rootfs/bin directory
 $(TARGET_ROOTFS_BIN_DIR): $(TARGET_ROOTFS_DIR)
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
+
+#? target rootfs/lib directory
+$(TARGET_ROOTFS_LIB_DIR): $(TARGET_ROOTFS_DIR)
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
+
+#? target rootfs/lib64 directory
+$(TARGET_ROOTFS_LIB64_DIR): $(TARGET_ROOTFS_DIR)
 	@if [ ! -d "$@" ]; then mkdir -p $@; fi
 
 #? the /bin/init binary
@@ -96,12 +121,39 @@ coreutils: $(TARGET_ROOTFS_BIN_DIR)/coreutils
 	@cp -Rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)
 
 #? the nushell release tar file
-$(TARGET_DIR)/nu.tar.gz:
-	curl -L -o $(TARGET_DIR)/nu.tar.gz https://github.com/nushell/nushell/releases/download/0.64.0/nu-0.64.0-x86_64-unknown-linux-musl.tar.gz
+$(TARGET_DIR)/nu.tar.gz: $(TARGET_DIR)
+	curl -L -o $@ https://github.com/nushell/nushell/releases/download/0.64.0/nu-0.64.0-x86_64-unknown-linux-musl.tar.gz
 
 #? the /bin/nu binary
 $(TARGET_ROOTFS_BIN_DIR)/nu: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/nu.tar.gz
 	@cd $(TARGET_ROOTFS_BIN_DIR) && \
 		tar -xvf $(TARGET_DIR)/nu.tar.gz && \
 		rm -rf README.* LICENSE nu_plugin_example
+	@ls -ahl $@ && file $@
+
+#? the git release tar file
+$(TARGET_DIR)/git.tar.gz: $(TARGET_DIR)
+	@curl -L -o $@ https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.37.0.tar.gz
+
+#? the git binary
+.PHONY: git
+git: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/git.tar.gz
+	@mkdir -p $(TARGET_DIR)/git && \
+		cd $(TARGET_DIR)/git && \
+		tar -xvf $(TARGET_DIR)/git.tar.gz --strip-components 1 && \
+		cp $(TARGET_DIR)/git/git $(TARGET_ROOTFS_BIN_DIR)
+
+#? the libc
+.PHONY: libc
+libc: $(TARGET_ROOTFS_LIB_DIR) $(TARGET_ROOTFS_LIB64_DIR)
+	$(GCC_DOCKER_CMD) bash -c \
+		"cd $(TARGET_ROOTFS_LIB_DIR) && \
+		mkdir -p x86_64-linux-gnu && \
+		cp -Rf /lib/x86_64-linux-gnu . && \
+		cd $(TARGET_ROOTFS_LIB64_DIR) && \
+		cp -Rf /lib64/* $(TARGET_ROOTFS_LIB64_DIR)"
+
+#? ldd binary
+$(TARGET_ROOTFS_BIN_DIR)/ldd: $(TARGET_ROOTFS_BIN_DIR)
+	$(GCC_DOCKER_CMD) bash -c "cp -Rf /usr/bin/ldd $@"
 	@ls -ahl $@ && file $@

@@ -1,5 +1,6 @@
-[![Makefile CI](https://github.com/leizongmin/newos/actions/workflows/makefile.yml/badge.svg)](https://github.com/leizongmin/newos/actions/workflows/makefile.yml)
+![GitHub](https://img.shields.io/github/license/leizongmin/newos)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fleizongmin%2Fnewos.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fleizongmin%2Fnewos?ref=badge_shield)
+[![Makefile CI](https://github.com/leizongmin/newos/actions/workflows/makefile.yml/badge.svg)](https://github.com/leizongmin/newos/actions/workflows/makefile.yml)
 
 # newos
 A Linux kernel based operating system

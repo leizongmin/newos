@@ -52,8 +52,12 @@ docker-save:
 
 #? all target
 .PHONY: all
-all: bin
+all: rootfs
 	@$(MAKE) docker-image
+
+#? make the rootfs
+.PHONY: rootfs
+rootfs: bin
 
 #? all binarys
 .PHONY: bin

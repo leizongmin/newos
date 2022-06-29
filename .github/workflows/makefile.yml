@@ -17,5 +17,5 @@ jobs:
     - name: Install Dependencies
       run: make init
 
-    - name: Make Binary
-      run: make bin
+    - name: Make rootfs
+      run: make rootfs

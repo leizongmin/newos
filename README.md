@@ -23,10 +23,18 @@ make init
 make all
 ```
 
-## Run on Docker
+## Try it with Docker
+
+Build and run manually:
 
 ```bash
 make docker-image && make docker-run
+```
+
+or use a pre-built version:
+
+```bash
+docker run -it --rm ghcr.io/leizongmin/newos:main
 ```
 
 ## TODO

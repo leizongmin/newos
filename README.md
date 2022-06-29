@@ -52,7 +52,7 @@ docker run -it --rm ghcr.io/leizongmin/newos:main
 
 -   [ ] Core software:
     -   [x] Use [uutils/coreutils](https://github.com/uutils/coreutils) as an alternative to GNU coreutils.
-        -   [ ] Use [BusyBox](https://busybox.net/) as a complement to uutils/coreutils.
+        -   [x] Use [BusyBox](https://busybox.net/) as a complement to uutils/coreutils.
     -   [x] Use [Nushell](https://www.nushell.sh/) as the default shell.
     -   [ ] Use [Homebrew](https://brew.sh/) as the default package manager.
         -   [x] [Git](https://git-scm.com/).

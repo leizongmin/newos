@@ -81,6 +81,7 @@ rootfs: bin libc
 .PHONY: bin
 bin: 	init \
 		coreutils \
+		busybox \
 		nushell \
 		git \
 		ldd \
@@ -155,7 +156,7 @@ $(TARGET_ROOTFS_BIN_DIR)/git: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/git.tar.gz
 	@mkdir -p $(TARGET_DIR)/git && \
 		cd $(TARGET_DIR)/git && \
 		tar -xvf $(TARGET_DIR)/git.tar.gz --strip-components 1
-	$(GCC_DOCKER_CMD) bash -c \
+	@$(GCC_DOCKER_CMD) bash -c \
 		"cd $(TARGET_DIR)/git && ./configure && make git -j$(CPU_NUMBER)"
 	@cp $(TARGET_DIR)/git/git $@
 	@ls -ahl $@ && file $@
@@ -167,7 +168,7 @@ git: $(TARGET_ROOTFS_BIN_DIR)/git
 #? the libc
 .PHONY: libc
 libc: $(TARGET_ROOTFS_LIB_DIR) $(TARGET_ROOTFS_LIB64_DIR)
-	$(GCC_DOCKER_CMD) bash -c \
+	@$(GCC_DOCKER_CMD) bash -c \
 		"cd $(TARGET_ROOTFS_LIB_DIR) && \
 		mkdir -p x86_64-linux-gnu && \
 		cp -Rf /lib/x86_64-linux-gnu . && \
@@ -176,7 +177,7 @@ libc: $(TARGET_ROOTFS_LIB_DIR) $(TARGET_ROOTFS_LIB64_DIR)
 
 #? ldd binary
 $(TARGET_ROOTFS_BIN_DIR)/ldd: $(TARGET_ROOTFS_BIN_DIR)
-	$(GCC_DOCKER_CMD) bash -c "cp -Rf /usr/bin/ldd $@"
+	@$(GCC_DOCKER_CMD) bash -c "cp -Rf /usr/bin/ldd $@"
 	@ls -ahl $@ && file $@
 
 .PHONY: ldd
@@ -192,12 +193,24 @@ $(TARGET_ROOTFS_BIN_DIR)/bash: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/bash.tar.g
 	@mkdir -p $(TARGET_DIR)/bash && \
 		cd $(TARGET_DIR)/bash && \
 		tar -xvf $(TARGET_DIR)/bash.tar.gz --strip-components 1
-	$(GCC_DOCKER_CMD) bash -c \
+	@$(GCC_DOCKER_CMD) bash -c \
 		"cd $(TARGET_DIR)/bash && ./configure && make bash -j$(CPU_NUMBER)"
 	@cp $(TARGET_DIR)/bash/bash $@
 	@ls -ahl $@ && file $@
 
 .PHONY: bash
 bash: $(TARGET_ROOTFS_BIN_DIR)/bash
+
+################################################################################
+#? the busybox binary
+$(TARGET_ROOTFS_BIN_DIR)/busybox: $(TARGET_ROOTFS_BIN_DIR)
+	@curl -L -o $@ https://busybox.net/downloads/binaries/1.31.0-defconfig-multiarch-musl/busybox-x86_64
+	@chmod +x $@
+	@ls -ahl $@ && file $@
+
+#? the busybox (cat, cp, cut, pwd, ...) binary
+.PHONY: busybox
+busybox: $(TARGET_ROOTFS_BIN_DIR)/busybox
+	@cp -Rfn $(CURDIR)/busybox/* $(TARGET_ROOTFS_BIN_DIR)
 
 ################################################################################

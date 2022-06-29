@@ -32,6 +32,7 @@ else
 	CPU_NUMBER ?= 1
 endif
 
+################################################################################
 #? get help information
 .PHONY: help
 help:
@@ -48,6 +49,7 @@ init:
 clean:
 	@$(GCC_DOCKER_CMD) bash -c "rm -rf ${TARGET_ROOTFS_DIR}"
 
+################################################################################
 #? make the docker image
 .PHONY: docker-image
 docker-image: Dockerfile
@@ -65,6 +67,7 @@ docker-save:
 	@docker save $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) > $(TARGET_DIR)/$(DOCKER_IMAGE_NAME).tar
 	@tar -tvf $(TARGET_DIR)/$(DOCKER_IMAGE_NAME).tar
 
+################################################################################
 #? all target
 .PHONY: all
 all: rootfs
@@ -78,10 +81,11 @@ rootfs: bin libc
 .PHONY: bin
 bin: 	$(TARGET_ROOTFS_DIR)/bin/init \
 		coreutils \
-		$(TARGET_ROOTFS_BIN_DIR)/nu \
+		nushell \
 		git \
 		$(TARGET_ROOTFS_BIN_DIR)/ldd \
 
+################################################################################
 #? target directory
 $(TARGET_DIR):
 	@if [ ! -d "$@" ]; then mkdir -p $@; fi
@@ -102,6 +106,7 @@ $(TARGET_ROOTFS_LIB_DIR): $(TARGET_ROOTFS_DIR)
 $(TARGET_ROOTFS_LIB64_DIR): $(TARGET_ROOTFS_DIR)
 	@if [ ! -d "$@" ]; then mkdir -p $@; fi
 
+################################################################################
 #? the /bin/init binary
 $(TARGET_ROOTFS_BIN_DIR)/init: $(TARGET_ROOTFS_BIN_DIR) $(CURDIR)/init
 	@$(RUST_MUSL_CROSS_DOCKER_CMD) bash -c "cd init && \
@@ -109,6 +114,7 @@ $(TARGET_ROOTFS_BIN_DIR)/init: $(TARGET_ROOTFS_BIN_DIR) $(CURDIR)/init
 		cp target/$(CARGO_TARGET)/release/init $(TARGET_ROOTFS_BIN_DIR)"
 	@ls -ahl $@ && file $@
 
+################################################################################
 #? the /bin/coreutils binary
 $(TARGET_ROOTFS_BIN_DIR)/coreutils: $(TARGET_ROOTFS_BIN_DIR)
 	@$(RUST_MUSL_CROSS_DOCKER_CMD) \
@@ -120,6 +126,7 @@ $(TARGET_ROOTFS_BIN_DIR)/coreutils: $(TARGET_ROOTFS_BIN_DIR)
 coreutils: $(TARGET_ROOTFS_BIN_DIR)/coreutils
 	@cp -Rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)
 
+################################################################################
 #? the nushell release tar file
 $(TARGET_DIR)/nu.tar.gz: $(TARGET_DIR)
 	curl -L -o $@ https://github.com/nushell/nushell/releases/download/0.64.0/nu-0.64.0-x86_64-unknown-linux-musl.tar.gz
@@ -131,18 +138,28 @@ $(TARGET_ROOTFS_BIN_DIR)/nu: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/nu.tar.gz
 		rm -rf README.* LICENSE nu_plugin_example
 	@ls -ahl $@ && file $@
 
+.PHONY: nushell
+nushell: $(TARGET_ROOTFS_BIN_DIR)/nu
+
+################################################################################
 #? the git release tar file
 $(TARGET_DIR)/git.tar.gz: $(TARGET_DIR)
 	@curl -L -o $@ https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.37.0.tar.gz
 
 #? the git binary
-.PHONY: git
-git: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/git.tar.gz
+$(TARGET_ROOTFS_BIN_DIR)/git: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/git.tar.gz
 	@mkdir -p $(TARGET_DIR)/git && \
 		cd $(TARGET_DIR)/git && \
-		tar -xvf $(TARGET_DIR)/git.tar.gz --strip-components 1 && \
-		cp $(TARGET_DIR)/git/git $(TARGET_ROOTFS_BIN_DIR)
+		tar -xvf $(TARGET_DIR)/git.tar.gz --strip-components 1
+	$(GCC_DOCKER_CMD) bash -c \
+		"cd $(TARGET_DIR)/git && ./configure && make git -j$(CPU_NUMBER)"
+	@cp $(TARGET_DIR)/git/git $@
+	@ls -ahl $@ && file $@
 
+.PHONY: git
+git: $(TARGET_ROOTFS_BIN_DIR)/git
+
+################################################################################
 #? the libc
 .PHONY: libc
 libc: $(TARGET_ROOTFS_LIB_DIR) $(TARGET_ROOTFS_LIB64_DIR)
@@ -157,3 +174,5 @@ libc: $(TARGET_ROOTFS_LIB_DIR) $(TARGET_ROOTFS_LIB64_DIR)
 $(TARGET_ROOTFS_BIN_DIR)/ldd: $(TARGET_ROOTFS_BIN_DIR)
 	$(GCC_DOCKER_CMD) bash -c "cp -Rf /usr/bin/ldd $@"
 	@ls -ahl $@ && file $@
+
+################################################################################

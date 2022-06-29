@@ -1,6 +1,6 @@
 ![GitHub](https://img.shields.io/github/license/leizongmin/newos)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fleizongmin%2Fnewos.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fleizongmin%2Fnewos?ref=badge_shield)
-[![Makefile CI](https://github.com/leizongmin/newos/actions/workflows/makefile.yml/badge.svg)](https://github.com/leizongmin/newos/actions/workflows/makefile.yml)
+[![Docker](https://github.com/leizongmin/newos/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/leizongmin/newos/actions/workflows/docker-publish.yml)
 
 # newos
 
@@ -52,11 +52,12 @@ docker run -it --rm ghcr.io/leizongmin/newos:main
 
 -   [ ] Core software:
     -   [x] Use [uutils/coreutils](https://github.com/uutils/coreutils) as an alternative to GNU coreutils.
-    -   [ ] Use [BusyBox](https://busybox.net/) as a complement to uutils/coreutils.
+        -   [ ] Use [BusyBox](https://busybox.net/) as a complement to uutils/coreutils.
     -   [x] Use [Nushell](https://www.nushell.sh/) as the default shell.
     -   [ ] Use [Homebrew](https://brew.sh/) as the default package manager.
-    -   [x] [Git](https://git-scm.com/).
+        -   [x] [Git](https://git-scm.com/).
     -   [x] [libc](https://www.gnu.org/software/libc/).
+    -   [ ] [GNU Bash](https://www.gnu.org/software/bash/) (Many programs assume that the bash command is included in the system).
     -   [ ] Use [Vim](https://www.vim.org/) as the default text editor.
     -   [ ] Use [ncdu](https://dev.yorhel.nl/ncdu) as a replacement for du.
     -   [ ] Use [htop](https://htop.dev/) as a replacement for top.
@@ -67,7 +68,9 @@ docker run -it --rm ghcr.io/leizongmin/newos:main
     -   [ ] Text-based Installer.
 -   [ ] GUI:
     -   [ ] [Wayland](https://wayland.freedesktop.org/).
-    -   [ ] A window manager written in rust.
+    -   [ ] A window manager written in Rust.
+-   [ ] Sandbox:
+    -   [ ] A container sandbox written in Rust. From this sandbox, applications can be run in the environment of other Linux distributions.
 
 ## License
 

@@ -84,6 +84,7 @@ bin: 	init \
 		nushell \
 		git \
 		ldd \
+		bash \
 
 ################################################################################
 #? target directory
@@ -180,5 +181,23 @@ $(TARGET_ROOTFS_BIN_DIR)/ldd: $(TARGET_ROOTFS_BIN_DIR)
 
 .PHONY: ldd
 ldd: $(TARGET_ROOTFS_BIN_DIR)/ldd
+
+################################################################################
+#? the bash release tar file
+$(TARGET_DIR)/bash.tar.gz: $(TARGET_DIR)
+	@curl -L -o $@ https://ftp.gnu.org/gnu/bash/bash-5.1.tar.gz
+
+#? the bash binary
+$(TARGET_ROOTFS_BIN_DIR)/bash: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/bash.tar.gz
+	@mkdir -p $(TARGET_DIR)/bash && \
+		cd $(TARGET_DIR)/bash && \
+		tar -xvf $(TARGET_DIR)/bash.tar.gz --strip-components 1
+	$(GCC_DOCKER_CMD) bash -c \
+		"cd $(TARGET_DIR)/bash && ./configure && make bash -j$(CPU_NUMBER)"
+	@cp $(TARGET_DIR)/bash/bash $@
+	@ls -ahl $@ && file $@
+
+.PHONY: bash
+bash: $(TARGET_ROOTFS_BIN_DIR)/bash
 
 ################################################################################

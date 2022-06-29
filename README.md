@@ -57,7 +57,7 @@ docker run -it --rm ghcr.io/leizongmin/newos:main
     -   [ ] Use [Homebrew](https://brew.sh/) as the default package manager.
         -   [x] [Git](https://git-scm.com/).
     -   [x] [libc](https://www.gnu.org/software/libc/).
-    -   [ ] [GNU Bash](https://www.gnu.org/software/bash/) (Many programs assume that the bash command is included in the system).
+    -   [x] [GNU Bash](https://www.gnu.org/software/bash/) (Many programs assume that the bash command is included in the system).
     -   [ ] Use [Vim](https://www.vim.org/) as the default text editor.
     -   [ ] Use [ncdu](https://dev.yorhel.nl/ncdu) as a replacement for du.
     -   [ ] Use [htop](https://htop.dev/) as a replacement for top.

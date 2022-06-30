@@ -54,13 +54,12 @@ docker run -it --rm ghcr.io/leizongmin/newos:main
     -   [x] Use [uutils/coreutils](https://github.com/uutils/coreutils) as an alternative to GNU coreutils.
         -   [x] Use [BusyBox](https://busybox.net/) as a complement to uutils/coreutils.
     -   [x] Use [Nushell](https://www.nushell.sh/) as the default shell.
-    -   [ ] Use [Homebrew](https://brew.sh/) as the default package manager.
+    -   [x] Use [Homebrew](https://brew.sh/) as the default package manager.
         -   [x] [Git](https://git-scm.com/).
+        -   [ ] [GNU Grep]().
     -   [x] [libc](https://www.gnu.org/software/libc/).
     -   [x] [GNU Bash](https://www.gnu.org/software/bash/) (Many programs assume that the bash command is included in the system).
-    -   [ ] Use [Vim](https://www.vim.org/) as the default text editor.
-    -   [ ] Use [ncdu](https://dev.yorhel.nl/ncdu) as a replacement for du.
-    -   [ ] Use [htop](https://htop.dev/) as a replacement for top.
+    -   [x] [curl](https://curl.se/).
 -   [ ] Boot:
     -   [ ] Build the [Linux Kernel](https://github.com/torvalds/linux) from source.
     -   [ ] Use [GRUB](https://www.gnu.org/software/grub/) as the boot loader.

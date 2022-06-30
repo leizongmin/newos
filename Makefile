@@ -8,12 +8,15 @@ TARGET_ROOTFS_DIR ?= $(TARGET_DIR)/rootfs
 TARGET_ROOTFS_BIN_DIR ?= $(TARGET_DIR)/rootfs/bin
 TARGET_ROOTFS_LIB_DIR ?= $(TARGET_DIR)/rootfs/lib
 TARGET_ROOTFS_LIB64_DIR ?= $(TARGET_DIR)/rootfs/lib64
+TARGET_ROOTFS_USR_DIR ?= $(TARGET_DIR)/rootfs/usr
+TARGET_ROOTFS_USR_BIN_DIR ?= $(TARGET_DIR)/rootfs/usr/bin
+TARGET_ROOTFS_HOME_DIR ?= $(TARGET_DIR)/rootfs/home
 
 #? cargo target
 CARGO_TARGET ?= x86_64-unknown-linux-musl
 CARGO_BUILD_CMD ?= cargo build --target=$(CARGO_TARGET) --release
 RUST_MUSL_CROSS_IMAGE_NAME ?= messense/rust-musl-cross:x86_64-musl
-RUST_MUSL_CROSS_DOCKER_CMD ?= @docker run --rm \
+RUST_MUSL_CROSS_DOCKER_CMD ?= docker run --rm \
 								-v $(CURDIR):$(CURDIR) \
 								-w $(CURDIR) \
 								-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
@@ -21,7 +24,7 @@ RUST_MUSL_CROSS_DOCKER_CMD ?= @docker run --rm \
 
 #? docker gcc
 GCC_IMAGE_NAME ?= gcc:12
-GCC_DOCKER_CMD ?= @docker run --rm \
+GCC_DOCKER_CMD ?= docker run --rm \
 					-v $(CURDIR):$(CURDIR) \
 					-w $(CURDIR) \
 					$(GCC_IMAGE_NAME)
@@ -68,6 +71,16 @@ docker-save:
 	@tar -tvf $(TARGET_DIR)/$(DOCKER_IMAGE_NAME).tar
 
 ################################################################################
+#? rust-musl shell
+.PHONY: rust-musl-shell
+rust-musl-shell:
+	@docker run -it --rm \
+		-v $(CURDIR):$(CURDIR) \
+		-w $(CURDIR) \
+		-v $(TARGET_DIR)/.cargo-registry:/root/.cargo/registry \
+		$(RUST_MUSL_CROSS_IMAGE_NAME)
+
+################################################################################
 #? all target
 .PHONY: all
 all: rootfs
@@ -75,7 +88,12 @@ all: rootfs
 
 #? make the rootfs
 .PHONY: rootfs
-rootfs: bin libc
+rootfs: bin libc bin-softlink rootfs-permission
+
+#? change rootfs permission
+.PHONY: rootfs-permission
+rootfs-permission:
+	@$(GCC_DOCKER_CMD) bash -c "chown -R root:root $(TARGET_ROOTFS_DIR)"
 
 #? all binarys
 .PHONY: bin
@@ -86,6 +104,15 @@ bin: 	init \
 		git \
 		ldd \
 		bash \
+		linuxbrew \
+		curl \
+		$(TARGET_ROOTFS_USR_BIN_DIR)
+
+#? softlink for some binarys
+.PHONY: bin-softlink
+bin-softlink: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_ROOTFS_USR_BIN_DIR)
+	@ln -s /bin/env $(TARGET_ROOTFS_USR_BIN_DIR)/env
+	@ln -s /bin/bash $(TARGET_ROOTFS_USR_BIN_DIR)/bash
 
 ################################################################################
 #? target directory
@@ -106,6 +133,18 @@ $(TARGET_ROOTFS_LIB_DIR): $(TARGET_ROOTFS_DIR)
 
 #? target rootfs/lib64 directory
 $(TARGET_ROOTFS_LIB64_DIR): $(TARGET_ROOTFS_DIR)
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
+
+#? target rootfs/usr directory
+$(TARGET_ROOTFS_USR_DIR): $(TARGET_ROOTFS_DIR)
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
+
+#? target rootfs/usr/bin directory
+$(TARGET_ROOTFS_USR_BIN_DIR): $(TARGET_ROOTFS_USR_DIR)
+	@if [ ! -d "$@" ]; then mkdir -p $@; fi
+
+#? target rootfs/home directory
+$(TARGET_ROOTFS_HOME_DIR): $(TARGET_ROOTFS_DIR)
 	@if [ ! -d "$@" ]; then mkdir -p $@; fi
 
 ################################################################################
@@ -157,12 +196,24 @@ $(TARGET_ROOTFS_BIN_DIR)/git: $(TARGET_ROOTFS_BIN_DIR) $(TARGET_DIR)/git.tar.gz
 		cd $(TARGET_DIR)/git && \
 		tar -xvf $(TARGET_DIR)/git.tar.gz --strip-components 1
 	@$(GCC_DOCKER_CMD) bash -c \
-		"cd $(TARGET_DIR)/git && ./configure && make git -j$(CPU_NUMBER)"
+		"cd $(TARGET_DIR)/git \
+		&& ./configure && \
+		make all -j$(CPU_NUMBER)"
 	@cp $(TARGET_DIR)/git/git $@
 	@ls -ahl $@ && file $@
 
+$(TARGET_ROOTFS_BIN_DIR)/git-remote-http: $(TARGET_ROOTFS_BIN_DIR)/git
+	@cp $(TARGET_DIR)/git/git-remote-http $@
+	@ls -ahl $@ && file $@
+
+$(TARGET_ROOTFS_BIN_DIR)/git-remote-https: $(TARGET_ROOTFS_BIN_DIR)/git
+	@cp $(TARGET_DIR)/git/git-remote-https $@
+	@ls -ahl $@ && file $@
+
 .PHONY: git
-git: $(TARGET_ROOTFS_BIN_DIR)/git
+git: 	$(TARGET_ROOTFS_BIN_DIR)/git \
+		$(TARGET_ROOTFS_BIN_DIR)/git-remote-http \
+		$(TARGET_ROOTFS_BIN_DIR)/git-remote-https \
 
 ################################################################################
 #? the libc
@@ -212,5 +263,31 @@ $(TARGET_ROOTFS_BIN_DIR)/busybox: $(TARGET_ROOTFS_BIN_DIR)
 .PHONY: busybox
 busybox: $(TARGET_ROOTFS_BIN_DIR)/busybox
 	@cp -Rfn $(CURDIR)/busybox/* $(TARGET_ROOTFS_BIN_DIR)
+
+################################################################################
+$(TARGET_DIR)/install-linuxbrew.sh: $(TARGET_DIR)
+	curl -L -o $@ https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+	chmod +x $@
+
+.PHONY: linuxbrew
+linuxbrew: $(TARGET_DIR) $(TARGET_DIR)/install-linuxbrew.sh $(TARGET_ROOTFS_HOME_DIR)
+	@rm -Rf $(TARGET_DIR)/linuxbrew
+	@docker run --rm \
+		-v $(CURDIR):$(CURDIR) \
+		-w $(CURDIR) \
+		-v $(TARGET_DIR)/linuxbrew:/home/linuxbrew \
+		$(GCC_IMAGE_NAME) \
+		bash -c "cd $(TARGET_DIR) && ./install-linuxbrew.sh"
+	@rm -Rf $(TARGET_ROOTFS_HOME_DIR)/linuxbrew
+	@cp -Rf $(TARGET_DIR)/linuxbrew $(TARGET_ROOTFS_HOME_DIR)
+
+################################################################################
+$(TARGET_ROOTFS_BIN_DIR)/curl: $(TARGET_ROOTFS_BIN_DIR)
+	@curl -L -o $@ https://github.com/moparisthebest/static-curl/releases/download/v7.83.1/curl-amd64
+	@chmod +x $@
+	@ls -ahl $@ && file $@
+
+.PHONY: curl
+curl: $(TARGET_ROOTFS_BIN_DIR)/curl
 
 ################################################################################

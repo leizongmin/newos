@@ -53,7 +53,8 @@ all: $(TARGET_DIR)/git-$(GIT_VERSION).tar.gz
 				cp -rf /lib/x86_64-linux-gnu/libhx509* $(TARGET_DIR)/build/lib; \
 				cp -rf /lib/x86_64-linux-gnu/libsqlite3* $(TARGET_DIR)/build/lib; \
 			"
-	@ls -ahl $(TARGET_DIR)/build
+	@ls -ahl $(TARGET_DIR)/build/bin
+	@ls -ahl $(TARGET_DIR)/build/lib
 
 $(TARGET_DIR):
 	@if [ ! -d $(TARGET_DIR) ]; then mkdir -p $(TARGET_DIR); fi

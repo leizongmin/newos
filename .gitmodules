@@ -1,0 +1,3 @@
+[submodule "base/coreutils/source"]
+	path = base/coreutils/source
+	url = https://github.com/uutils/coreutils.git

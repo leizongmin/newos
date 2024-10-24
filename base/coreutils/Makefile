@@ -24,3 +24,5 @@ coreutils:
 dist:
 	mkdir -p $(DIST_DIR)/bin
 	cp $(TARGET_DIR)/$(CARGO_TARGET)/release/coreutils $(DIST_DIR)/bin
+	$(DIST_DIR)/bin/coreutils | grep -A10000 "Currently defined functions:" | tail -n +2 | sed 's/,\s*/\n/g' | sed 's/^\s*//g' | sed '/^$$/d' > commands.txt
+	./make-soft-link.sh $(DIST_DIR)/bin

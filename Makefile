@@ -159,16 +159,10 @@ $(TARGET_ROOTFS_BIN_DIR)/init: $(TARGET_ROOTFS_BIN_DIR) $(CURDIR)/init
 init: $(TARGET_ROOTFS_BIN_DIR)/init
 
 ################################################################################
-#? the /bin/coreutils binary
-$(TARGET_ROOTFS_BIN_DIR)/coreutils: $(TARGET_ROOTFS_BIN_DIR)
-	@$(RUST_MUSL_CROSS_DOCKER_CMD) \
-		cargo install coreutils --target $(CARGO_TARGET) --root $(TARGET_ROOTFS_DIR)
-	@ls -ahl $@ && file $@
-
 #? the coreutils (cat, cp, cut, pwd, ...) binary
 .PHONY: coreutils
-coreutils: $(TARGET_ROOTFS_BIN_DIR)/coreutils
-	@cp -Rf $(CURDIR)/coreutils/* $(TARGET_ROOTFS_BIN_DIR)
+coreutils:
+	$(MAKE) -C base/coreutils
 
 ################################################################################
 #? the nushell release tar file
